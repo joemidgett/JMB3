@@ -65,7 +65,7 @@
           uiLastY_Normal="342" uiopen_Normal="1">
     <PLUGIN name="AudioFilePlayer" format="VST3" category="Fx" manufacturer="Matkat Music LLC"
             version="1.0.0" file="C:\Users\josep\Dev\AudioFilePlayer\Builds\VisualStudio2022\x64\Debug\VST3\AudioFilePlayer.vst3"
-            uniqueId="79fe81c" isInstrument="0" fileTime="17ebf3d9b72" infoUpdateTime="17ee1eb8ba4"
+            uniqueId="79fe81c" isInstrument="0" fileTime="17ebf3d9b72" infoUpdateTime="17ee1ece6c5"
             numInputs="2" numOutputs="2" isShell="0" uid="e95d02c7"/>
     <STATE>326.VMjLgzS....O+fWarAhckI2bo8la8HRLt.iHfTlai8FYo41Y8HRUTYTK3HxO9.BOVMEUy.Ea0cVZtMEcgQWY9vSRC8Vav8lak4Fc9DiMv3BTIISX1UEaho2ZVkUdAAkKAwDUigWRWkEcQ0VTucmUY4BQtHUQLolShUELhsVRxHlXuESX4UkQhIFLTMVdqECVhUjZho2ZwHldMczU5slQhYWUrIlXMUjTAAiZPgTQDMUPAITTOM1ZSQUUTMET3PDRSUEQUYFTUokcAcUV3QiTgYWSC4hKt3hKt3hKt3hKt3hRUACTEEzZh8VVWgkdUYTTmE0UX4BQP4hPqcjXm0jLh4BQP4xPt.0Qt3hKt3hKt3hKtQUUCUEQTg2ZrM1YQcUVDUjQicVP77RRC8Vav8lak4Fc9vyKVMEUy.Ea0cVZtMEcgQWY9..</STATE>
     <LAYOUT>
@@ -81,7 +81,7 @@
           uiLastY_Normal="8" uiopen_Normal="0">
     <PLUGIN name="JMB3" format="VST3" category="Fx" manufacturer="Joe Midgett"
             version="1.0.0" file="C:\Program Files\Common Files\VST3\JMB3.vst3"
-            uniqueId="fa9bdaeb" isInstrument="0" fileTime="17ee1e08acb" infoUpdateTime="17ee1eb8ba4"
+            uniqueId="fa9bdaeb" isInstrument="0" fileTime="17ee1e08acb" infoUpdateTime="17ee1ece6c6"
             numInputs="2" numOutputs="2" isShell="0" uid="e957092c"/>
     <STATE>191.VMjLgXK....O+fWarAhckI2bo8la8HRLt.iHfTlai8FYo41Y8HRUTYTK3HxO9.BOVMEUy.Ea0cVZtMEcgQWY9vSRC8Vav8lak4Fc9XCLt3hKt3hKt3hKt3hYRUUSTEETIckVwTjQisVTTgkdEYjKAQjYPQSPWgUdMcjKAQjct3hdA4hKt3hKt3hKtnTUv.UQAslXuk0UXoWUFE0YQcEV77RRC8Vav8lak4Fc9vyKVMEUy.Ea0cVZtMEcgQWY9..</STATE>
     <LAYOUT>
