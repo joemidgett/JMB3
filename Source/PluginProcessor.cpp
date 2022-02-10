@@ -166,7 +166,8 @@ bool JMB3AudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* JMB3AudioProcessor::createEditor()
 {
-    return new JMB3AudioProcessorEditor (*this);
+    // return new JMB3AudioProcessorEditor (*this);
+    return new juce::GenericAudioProcessorEditor(*this);
 }
 
 //==============================================================================
@@ -175,12 +176,57 @@ void JMB3AudioProcessor::getStateInformation (juce::MemoryBlock& destData)
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
+    juce::MemoryOutputStream memoryOutputStream(destData, true);
+
+    apvts.state.writeToStream(memoryOutputStream);
 }
 
 void JMB3AudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+    auto valueTree = juce::ValueTree::readFromData(data, sizeInBytes);
+
+    if (valueTree.isValid())
+    {
+        apvts.replaceState(valueTree);
+    }
+}
+
+juce::AudioProcessorValueTreeState::ParameterLayout JMB3AudioProcessor::createParameterLayout()
+{
+    APVTS::ParameterLayout layout;
+
+    using namespace juce;
+
+    layout.add(std::make_unique<AudioParameterFloat>("Threshold", 
+        "Threshold", 
+        NormalisableRange<float>(-60, 12, 1, 1), 
+        0));
+
+    auto attackReleaseRange = NormalisableRange<float>(5, 500, 1, 1);
+
+    layout.add(std::make_unique<AudioParameterFloat>("Attack", 
+        "Attack", 
+        attackReleaseRange, 
+        50));
+
+    layout.add(std::make_unique<AudioParameterFloat>("Release",
+        "Release",
+        attackReleaseRange,
+        250));
+
+    auto choices = std::vector<double>{ 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 10, 15, 20, 50, 100 };
+
+    juce::StringArray stringArray;
+    for (auto choice : choices)
+    {
+        stringArray.add(juce::String(choice, 1));
+    }
+
+    layout.add(std::make_unique<AudioParameterChoice>("Ratio", "Ratio", stringArray, 3));
+
+    return layout;
 }
 
 //==============================================================================
