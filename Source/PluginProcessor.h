@@ -156,6 +156,14 @@ private:
 
     CompressorBand compressor;
 
+    using LinkwitzRileyFilter = juce::dsp::LinkwitzRileyFilter<float>;
+
+    LinkwitzRileyFilter lrLowpass, lrHighpass;
+
+    juce::AudioParameterFloat* lowCrossover{ nullptr };
+
+    std::array<juce::AudioBuffer<float>, 2> filterBuffers;
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JMB3AudioProcessor)
 };
