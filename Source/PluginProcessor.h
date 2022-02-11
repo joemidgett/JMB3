@@ -158,7 +158,9 @@ private:
 
     using LinkwitzRileyFilter = juce::dsp::LinkwitzRileyFilter<float>;
 
-    LinkwitzRileyFilter lrLowpass, lrHighpass;
+    LinkwitzRileyFilter lrLowpass, lrHighpass, lrAllpass;
+
+    juce::AudioBuffer<float> lrAllpassBuffer;
 
     juce::AudioParameterFloat* lowCrossover{ nullptr };
 
