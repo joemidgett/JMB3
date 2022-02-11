@@ -10,6 +10,44 @@
 
 #include <JuceHeader.h>
 
+struct CompressorBand
+{
+public:
+
+    void prepareCompressor(const juce::dsp::ProcessSpec& spec)
+    {
+        compressor.prepare(spec);
+    }
+
+    void updateCompressorSettings()
+    {
+        compressor.setAttack(attack->get());
+        compressor.setRelease(release->get());
+        compressor.setThreshold(threshold->get());
+        compressor.setRatio(ratio->getCurrentChoiceName().getFloatValue());
+    }
+
+    void processCompressor(juce::AudioBuffer<float>& buffer)
+    {
+        auto audioBlock = juce::dsp::AudioBlock<float>(buffer);
+
+        auto processContextReplacing = juce::dsp::ProcessContextReplacing<float>(audioBlock);
+
+        processContextReplacing.isBypassed = bypass->get();
+
+        compressor.process(processContextReplacing);
+    }
+
+    juce::AudioParameterFloat* attack{ nullptr };
+    juce::AudioParameterFloat* release{ nullptr };
+    juce::AudioParameterFloat* threshold{ nullptr };
+    juce::AudioParameterChoice* ratio{ nullptr };
+    juce::AudioParameterBool* bypass{ nullptr };
+
+private:
+    juce::dsp::Compressor<float> compressor;
+};
+
 //==============================================================================
 /**
 */
@@ -61,13 +99,7 @@ public:
 
 private:
 
-    juce::dsp::Compressor<float> compressor;
-
-    juce::AudioParameterFloat* attack{ nullptr };
-    juce::AudioParameterFloat* release{ nullptr };
-    juce::AudioParameterFloat* threshold{ nullptr };
-    juce::AudioParameterChoice* ratio{ nullptr };
-    juce::AudioParameterBool* bypass{ nullptr };
+    CompressorBand compressor;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JMB3AudioProcessor)
