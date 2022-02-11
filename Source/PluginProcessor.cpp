@@ -22,6 +22,20 @@ JMB3AudioProcessor::JMB3AudioProcessor()
                        )
 #endif
 {
+    attack = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Attack"));
+    jassert(attack != nullptr);
+
+    release = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Release"));
+    jassert(release != nullptr);
+
+    threshold = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Threshold"));
+    jassert(threshold != nullptr);
+
+    ratio = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("Ratio"));
+    jassert(ratio != nullptr);
+
+    bypass = dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter("Bypass"));
+    jassert(bypass != nullptr);
 }
 
 JMB3AudioProcessor::~JMB3AudioProcessor()
@@ -95,6 +109,13 @@ void JMB3AudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+
+    juce::dsp::ProcessSpec processSpec;
+    processSpec.maximumBlockSize = samplesPerBlock;
+    processSpec.numChannels = getTotalNumOutputChannels();
+    processSpec.sampleRate = sampleRate;
+
+    compressor.prepare(processSpec);
 }
 
 void JMB3AudioProcessor::releaseResources()
@@ -144,18 +165,20 @@ void JMB3AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
+    compressor.setAttack(attack->get());
+    compressor.setRelease(release->get());
+    compressor.setThreshold(threshold->get());
+    compressor.setRatio(ratio->getCurrentChoiceName().getFloatValue());
 
-        // ..do something to the data...
-    }
+    auto audioBlock = juce::dsp::AudioBlock<float>(buffer);
+
+    auto processContextReplacing = juce::dsp::ProcessContextReplacing<float>(audioBlock);
+
+    processContextReplacing.isBypassed = bypass->get();
+
+    compressor.process(processContextReplacing);
+
+
 }
 
 //==============================================================================
@@ -225,6 +248,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout JMB3AudioProcessor::createPa
     }
 
     layout.add(std::make_unique<AudioParameterChoice>("Ratio", "Ratio", stringArray, 3));
+
+    layout.add(std::make_unique<AudioParameterBool>("Bypass", "Bypass", false));
 
     return layout;
 }
