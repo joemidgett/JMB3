@@ -355,8 +355,8 @@ bool JMB3AudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* JMB3AudioProcessor::createEditor()
 {
-    // return new JMB3AudioProcessorEditor (*this);
-    return new juce::GenericAudioProcessorEditor(*this);
+    return new JMB3AudioProcessorEditor(*this);
+    // return new juce::GenericAudioProcessorEditor(*this);
 }
 
 //==============================================================================
