@@ -75,6 +75,8 @@ JMB3AudioProcessor::JMB3AudioProcessor()
     floatHelper(lowMidCrossover, Names::Low_Mid_Crossover_Freq);
     floatHelper(midHighCrossover, Names::Mid_High_Crossover_Freq);
 
+    floatHelper(inputGainParam, Names::Gain_In);
+    floatHelper(outputGainParam, Names::Gain_Out);
 
     lrLowpassOne.setType(juce::dsp::LinkwitzRileyFilterType::lowpass);
     lrHighpassOne.setType(juce::dsp::LinkwitzRileyFilterType::highpass);
@@ -181,6 +183,12 @@ void JMB3AudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 
     //invertedAllpassBuffer.setSize(processSpec.numChannels, samplesPerBlock);
 
+    inputGain.prepare(processSpec);
+    outputGain.prepare(processSpec);
+
+    inputGain.setRampDurationSeconds(0.05); // 50 ms
+    outputGain.setRampDurationSeconds(0.05);
+
     for (auto& buffer : filterBuffers)
     {
         buffer.setSize(processSpec.numChannels, samplesPerBlock);
@@ -219,6 +227,49 @@ bool JMB3AudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) con
 }
 #endif
 
+void JMB3AudioProcessor::updateState()
+{
+    for (auto& compressor : compressors)
+        compressor.updateCompressorSettings();
+
+    auto lowMidCutoffFreq = lowMidCrossover->get();
+    lrLowpassOne.setCutoffFrequency(lowMidCutoffFreq);
+    lrHighpassOne.setCutoffFrequency(lowMidCutoffFreq);
+
+    auto midHighCutoffFreq = midHighCrossover->get();
+    lrAllpassTwo.setCutoffFrequency(midHighCutoffFreq);
+    lrLowpassTwo.setCutoffFrequency(midHighCutoffFreq);
+    lrHighpassTwo.setCutoffFrequency(midHighCutoffFreq);
+
+    inputGain.setGainDecibels(inputGainParam->get());
+    outputGain.setGainDecibels(outputGainParam->get());
+}
+
+void JMB3AudioProcessor::splitBands(const juce::AudioBuffer<float>& inputBuffer)
+{
+    for (auto& filterBuffer : filterBuffers)
+    {
+        filterBuffer = inputBuffer;
+    }
+
+    auto filterBufferZeroBlock = juce::dsp::AudioBlock<float>(filterBuffers[0]);
+    auto filterBufferOneBlock = juce::dsp::AudioBlock<float>(filterBuffers[1]);
+    auto filterBufferTwoBlock = juce::dsp::AudioBlock<float>(filterBuffers[2]);
+
+    auto filterBufferZeroContext = juce::dsp::ProcessContextReplacing<float>(filterBufferZeroBlock);
+    auto filterBufferOneContext = juce::dsp::ProcessContextReplacing<float>(filterBufferOneBlock);
+    auto filterBufferTwoContext = juce::dsp::ProcessContextReplacing<float>(filterBufferTwoBlock);
+
+    lrLowpassOne.process(filterBufferZeroContext);
+    lrAllpassTwo.process(filterBufferZeroContext);
+
+    lrHighpassOne.process(filterBufferOneContext);
+    filterBuffers[2] = filterBuffers[1];
+    lrLowpassTwo.process(filterBufferOneContext);
+
+    lrHighpassTwo.process(filterBufferTwoContext);
+}
+
 void JMB3AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
@@ -234,44 +285,11 @@ void JMB3AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    for (auto& compressor : compressors)
-        compressor.updateCompressorSettings();
-    //compressor.processCompressor(buffer);
+    updateState();
 
-    for (auto& filterBuffer : filterBuffers)
-    {
-        filterBuffer = buffer;
-    }
+    applyGain(buffer, inputGain);
 
-    // invertedAllpassBuffer = buffer;
-
-    auto lowMidCutoffFreq = lowMidCrossover->get();
-    lrLowpassOne.setCutoffFrequency(lowMidCutoffFreq);
-    lrHighpassOne.setCutoffFrequency(lowMidCutoffFreq);
-    // invertedAllpassOne.setCutoffFrequency(lowMidCutoffFreq);
-
-    auto midHighCutoffFreq = midHighCrossover->get();
-    lrAllpassTwo.setCutoffFrequency(midHighCutoffFreq);
-    lrLowpassTwo.setCutoffFrequency(midHighCutoffFreq);
-    lrHighpassTwo.setCutoffFrequency(midHighCutoffFreq);
-    // invertedAllpassTwo.setCutoffFrequency(midHighCutoffFreq);
-
-    auto filterBufferZeroBlock = juce::dsp::AudioBlock<float>(filterBuffers[0]);
-    auto filterBufferOneBlock = juce::dsp::AudioBlock<float>(filterBuffers[1]);
-    auto filterBufferTwoBlock = juce::dsp::AudioBlock<float>(filterBuffers[2]);
-
-    auto filterBufferZeroContext = juce::dsp::ProcessContextReplacing<float>(filterBufferZeroBlock);
-    auto filterBufferOneContext = juce::dsp::ProcessContextReplacing<float>(filterBufferOneBlock);
-    auto filterBufferTwoContext = juce::dsp::ProcessContextReplacing<float>(filterBufferTwoBlock);
-
-    lrLowpassOne.process(filterBufferZeroContext);
-    lrAllpassTwo.process(filterBufferZeroContext);
-    
-    lrHighpassOne.process(filterBufferOneContext);
-    filterBuffers[2] = filterBuffers[1];
-    lrLowpassTwo.process(filterBufferOneContext);
-
-    lrHighpassTwo.process(filterBufferTwoContext);
+    splitBands(buffer);
 
     for (size_t i = 0; i < filterBuffers.size(); ++i)
     {
@@ -301,10 +319,6 @@ void JMB3AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
         }
     }
 
-    //addFilterBand(buffer, filterBuffers[0]);
-    //addFilterBand(buffer, filterBuffers[1]);
-    //addFilterBand(buffer, filterBuffers[2]);
-
     if (bandsAreSoloed)
     {
         for (size_t i = 0; i < compressors.size(); ++i)
@@ -329,6 +343,8 @@ void JMB3AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
             }
         }
     }
+
+    applyGain(buffer, outputGain);
 }
 
 //==============================================================================
@@ -375,23 +391,35 @@ juce::AudioProcessorValueTreeState::ParameterLayout JMB3AudioProcessor::createPa
 
     const auto& params = getParams();
 
+    auto gainRange = NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.f);
+
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Gain_In),
+        params.at(Names::Gain_In),
+        gainRange,
+        0));
+
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Gain_Out),
+        params.at(Names::Gain_Out),
+        gainRange,
+        0));
+
+    auto thresholdRange = NormalisableRange<float>(-60, 12, 1, 1);
     layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Threshold_Low_Band),
         params.at(Names::Threshold_Low_Band),
-        NormalisableRange<float>(-60, 12, 1, 1), 
+        thresholdRange,
         0));
 
     layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Threshold_Mid_Band),
         params.at(Names::Threshold_Mid_Band),
-        NormalisableRange<float>(-60, 12, 1, 1),
+        thresholdRange,
         0));
 
     layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Threshold_High_Band),
         params.at(Names::Threshold_High_Band),
-        NormalisableRange<float>(-60, 12, 1, 1),
+        thresholdRange,
         0));
 
     auto attackReleaseRange = NormalisableRange<float>(5, 500, 1, 1);
-
     layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Attack_Low_Band),
         params.at(Names::Attack_Low_Band),
         attackReleaseRange, 
