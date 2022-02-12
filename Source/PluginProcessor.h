@@ -154,17 +154,26 @@ public:
 
 private:
 
-    CompressorBand compressor;
+    std::array<CompressorBand, 3> compressors;
+
+    CompressorBand& lowBandComp = compressors[0];
+    CompressorBand& midBandComp = compressors[1];
+    CompressorBand& highBandComp = compressors[2];
+
 
     using LinkwitzRileyFilter = juce::dsp::LinkwitzRileyFilter<float>;
+    //                  filterCutoff0 filterCutoff1
+    LinkwitzRileyFilter lrLowpassOne, lrAllpassTwo,
+                        lrHighpassOne, lrLowpassTwo,
+                                       lrHighpassTwo;
 
-    LinkwitzRileyFilter lrLowpass, lrHighpass, lrAllpass;
+    // LinkwitzRileyFilter invertedAllpassOne, invertedAllpassTwo;
+    // juce::AudioBuffer<float> invertedAllpassBuffer;
 
-    juce::AudioBuffer<float> lrAllpassBuffer;
+    juce::AudioParameterFloat* lowMidCrossover{ nullptr };
+    juce::AudioParameterFloat* midHighCrossover{ nullptr };
 
-    juce::AudioParameterFloat* lowCrossover{ nullptr };
-
-    std::array<juce::AudioBuffer<float>, 2> filterBuffers;
+    std::array<juce::AudioBuffer<float>, 3> filterBuffers;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JMB3AudioProcessor)
