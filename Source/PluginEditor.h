@@ -24,6 +24,11 @@ struct Placeholder : juce::Component
     juce::Colour customColor;
 };
 
+struct GlobalControls : juce::Component
+{
+    void paint(juce::Graphics& g) override;
+};
+
 class JMB3AudioProcessorEditor  : public juce::AudioProcessorEditor
 {
 public:
@@ -39,7 +44,9 @@ private:
     // access the processor object that created it.
     JMB3AudioProcessor& audioProcessor;
 
-    Placeholder controlBarArea, analyzerArea, globalControlsArea, bandControlsArea;
+    Placeholder controlBarArea, analyzerArea, /*globalControlsArea,*/ bandControlsArea;
+
+    GlobalControls globalControlsArea;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JMB3AudioProcessorEditor)
 };
