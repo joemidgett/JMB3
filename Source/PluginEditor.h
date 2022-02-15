@@ -25,22 +25,22 @@ struct LookAndFeel : juce::LookAndFeel_V4
 
 struct RotarySliderWithLabels : juce::Slider
 {
-    RotarySliderWithLabels(juce::RangedAudioParameter& rap, 
+    RotarySliderWithLabels(juce::RangedAudioParameter* rap, 
         const juce::String& unitSuffix,
         const juce::String& title /*= "NO TITLE"*/) :
             juce::Slider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
             juce::Slider::TextEntryBoxPosition::NoTextBox),
-            param(&rap),
+            param(rap),
             suffix(unitSuffix)
     {
         setName(title);
-        setLookAndFeel(&lnf);
+        // setLookAndFeel(&lnf);
     }
 
-    ~RotarySliderWithLabels()
-    {
-        setLookAndFeel(nullptr);
-    }
+    //~RotarySliderWithLabels()
+    //{
+    //    setLookAndFeel(nullptr);
+    //}
 
     struct LabelPos
     {
@@ -53,13 +53,22 @@ struct RotarySliderWithLabels : juce::Slider
     void paint(juce::Graphics& g) override;
     juce::Rectangle<int> getSliderBounds() const;
     int getTextHeight() const { return 14; }
-    juce::String getDisplayString() const;
+    virtual juce::String getDisplayString() const;
 
-private:
-    LookAndFeel lnf;
+    void changeParam(juce::RangedAudioParameter* p);
 
+protected:
     juce::RangedAudioParameter* param;
     juce::String suffix;
+};
+
+struct RatioSlider : RotarySliderWithLabels
+{
+    RatioSlider(juce::RangedAudioParameter* rap,
+        const juce::String& unitSuffix) : 
+    RotarySliderWithLabels(rap, unitSuffix, "RATIO") {}
+
+    juce::String getDisplayString() const override;
 };
 
 struct PowerButton : juce::ToggleButton { };
@@ -108,13 +117,7 @@ struct RotarySlider : juce::Slider
     { }
 };
 
-template<
-    typename SliderAttachment,
-    typename APVTS,
-    typename Params,
-    typename ParamName,
-    typename SliderType
-    >
+template<typename SliderAttachment, typename APVTS, typename Params, typename ParamName, typename SliderType>
 void makeAttachment(std::unique_ptr<SliderAttachment>& sliderAttachment,
     APVTS& apvts,
     const Params& params,
@@ -124,11 +127,7 @@ void makeAttachment(std::unique_ptr<SliderAttachment>& sliderAttachment,
     sliderAttachment = std::make_unique<SliderAttachment>(apvts, params.at(name), slider);
 }
 
-template<
-    typename APVTS,
-    typename Params,
-    typename Name
-    >
+template<typename APVTS, typename Params, typename Name>
 juce::RangedAudioParameter& getParam(APVTS& apvts, const Params& params, const Name& name)
 {
     auto param = apvts.getParameter(params.at(name));
@@ -141,17 +140,34 @@ juce::String getValString(const juce::RangedAudioParameter& param,
     bool getLow,
     juce::String suffix);
 
-template<
-    typename Labels,
-    typename ParamType,
-    typename SuffixType
-    >
+template<typename Labels, typename ParamType, typename SuffixType>
 void addLabelPairs(Labels& labels, const ParamType& param, const SuffixType& suffix)
 {
     labels.clear();
     labels.add({0.f, getValString(param, true, suffix)});
     labels.add({ 1.f, getValString(param, false, suffix) });
 }
+
+struct CompressorBandControls : juce::Component
+{
+    CompressorBandControls(juce::AudioProcessorValueTreeState& apvts);
+
+    void paint(juce::Graphics& g) override;
+
+    void resized() override;
+
+private:
+    juce::AudioProcessorValueTreeState& apvts;
+
+    RotarySliderWithLabels attackSlider, releaseSlider, thresholdSlider;
+    RatioSlider ratioSlider;
+
+    using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
+    std::unique_ptr<SliderAttachment> attackSliderAttachment,
+        releaseSliderAttachment,
+        thresholdSliderAttachment,
+        ratioSliderAttachment;
+};
 
 struct GlobalControls : juce::Component
 {
@@ -172,7 +188,7 @@ private:
         outputGainSliderAttachment;
 };
 
-class JMB3AudioProcessorEditor  : public juce::AudioProcessorEditor
+class JMB3AudioProcessorEditor : public juce::AudioProcessorEditor
 {
 public:
     JMB3AudioProcessorEditor (JMB3AudioProcessor&);
@@ -183,13 +199,17 @@ public:
     void resized() override;
 
 private:
+    LookAndFeel lnf;
+
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     JMB3AudioProcessor& audioProcessor;
 
-    Placeholder controlBarArea, analyzerArea, /*globalControlsArea,*/ bandControlsArea;
+    Placeholder controlBarArea, analyzerArea;
 
     GlobalControls globalControlsArea { audioProcessor.apvts };
+
+    CompressorBandControls bandControlsArea { audioProcessor.apvts };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JMB3AudioProcessorEditor)
 };
