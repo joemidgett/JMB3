@@ -1,7 +1,9 @@
 // LookAndFeel.cpp
 
-#include "CustomButtons.h"
 #include "LookAndFeel.h"
+
+#include "CustomButtons.h"
+#include "RotarySliderWithLabels.h"
 
 void LookAndFeel::drawRotarySlider(juce::Graphics& g,
     int x,
@@ -19,16 +21,15 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
 
     auto enabled = slider.isEnabled();
 
-    g.setColour(enabled ? Colour(78u, 42u, 132u) : Colours::darkgrey);
+    g.setColour(enabled ? Colour(97u, 18u, 167u) : Colours::darkgrey);
     g.fillEllipse(bounds);
 
-    g.setColour(enabled ? Colour(216u, 191u, 216u) : Colours::grey);
+    g.setColour(enabled ? Colour(255u, 154u, 1u) : Colours::grey);
     g.drawEllipse(bounds, 1.f);
 
     if (auto* rswl = dynamic_cast<RotarySliderWithLabels*>(&slider))
     {
         auto center = bounds.getCentre();
-
         Path p;
 
         Rectangle<float> r;
@@ -75,13 +76,10 @@ void LookAndFeel::drawToggleButton(juce::Graphics& g,
 
         auto bounds = toggleButton.getLocalBounds();
 
-        //g.setColour(Colours::red);
-        //g.drawRect(bounds);
-
         auto size = jmin(bounds.getWidth(), bounds.getHeight()) - 6;
         auto r = bounds.withSizeKeepingCentre(size, size).toFloat();
 
-        float ang = 30.f;
+        float ang = 30.f; //30.f;
 
         size -= 6;
 
@@ -124,7 +122,10 @@ void LookAndFeel::drawToggleButton(juce::Graphics& g,
 
         const int cornerSize = 4;
 
-        g.setColour(buttonIsOn ? juce::Colours::white : juce::Colours::black);
+        g.setColour(buttonIsOn ?
+            toggleButton.findColour(TextButton::ColourIds::buttonOnColourId) :
+            toggleButton.findColour(TextButton::ColourIds::buttonColourId));
+
         g.fillRoundedRectangle(bounds.toFloat(), cornerSize);
 
         g.setColour(buttonIsOn ? juce::Colours::black : juce::Colours::white);
