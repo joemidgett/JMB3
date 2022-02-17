@@ -4,7 +4,7 @@
 #include "PluginProcessor.h"
 
 // ==============================================================================
-ResponseCurveComponent::ResponseCurveComponent(JMB3AudioProcessor& p) :
+SpectrumAnalyzer::SpectrumAnalyzer(JMB3AudioProcessor& p) :
     audioProcessor(p),
 
     leftPathProducer(audioProcessor.leftChannelFifo),
@@ -19,7 +19,7 @@ ResponseCurveComponent::ResponseCurveComponent(JMB3AudioProcessor& p) :
     startTimerHz(60);
 }
 
-ResponseCurveComponent::~ResponseCurveComponent()
+SpectrumAnalyzer::~SpectrumAnalyzer()
 {
     const auto& params = audioProcessor.getParameters();
     for (auto param : params)
@@ -28,7 +28,7 @@ ResponseCurveComponent::~ResponseCurveComponent()
     }
 }
 
-void ResponseCurveComponent::parameterValueChanged(int parameterIndex, float newValue)
+void SpectrumAnalyzer::parameterValueChanged(int parameterIndex, float newValue)
 {
     parametersChanged.set(true);
 }
@@ -86,7 +86,7 @@ void PathProducer::process(juce::Rectangle<float> fftBounds, double sampleRate)
     }
 }
 
-void ResponseCurveComponent::timerCallback()
+void SpectrumAnalyzer::timerCallback()
 {
     if (shouldShowFFTAnalysis)
     {
@@ -108,7 +108,7 @@ void ResponseCurveComponent::timerCallback()
     repaint();
 }
 
-void ResponseCurveComponent::paint(juce::Graphics& g)
+void SpectrumAnalyzer::paint(juce::Graphics& g)
 {
     using namespace juce;
     g.fillAll(Colours::black);
@@ -202,7 +202,7 @@ void ResponseCurveComponent::paint(juce::Graphics& g)
     //g.strokePath(responseCurve, PathStrokeType(2.f));
 }
 
-void ResponseCurveComponent::resized()
+void SpectrumAnalyzer::resized()
 {
     using namespace juce;
     background = Image(Image::PixelFormat::RGB, getWidth(), getHeight(), true);
@@ -313,7 +313,7 @@ void ResponseCurveComponent::resized()
     }
 }
 
-juce::Rectangle<int> ResponseCurveComponent::getRenderArea()
+juce::Rectangle<int> SpectrumAnalyzer::getRenderArea()
 {
     auto bounds = getLocalBounds();
 
@@ -325,7 +325,7 @@ juce::Rectangle<int> ResponseCurveComponent::getRenderArea()
     return bounds;
 }
 
-juce::Rectangle<int> ResponseCurveComponent::getAnalysisArea()
+juce::Rectangle<int> SpectrumAnalyzer::getAnalysisArea()
 {
     auto bounds = getRenderArea();
     bounds.removeFromTop(4);

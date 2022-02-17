@@ -176,12 +176,12 @@ private:
     juce::Path leftChannelFFTPath;
 };
 
-struct ResponseCurveComponent : juce::Component,
+struct SpectrumAnalyzer : juce::Component,
     juce::AudioProcessorParameter::Listener,
     juce::Timer
 {
-    ResponseCurveComponent(JMB3AudioProcessor&);
-    ~ResponseCurveComponent();
+    SpectrumAnalyzer(JMB3AudioProcessor&);
+    ~SpectrumAnalyzer();
 
     void parameterValueChanged(int parameterIndex, float newValue) override;
 
@@ -240,7 +240,7 @@ private:
 
     CompressorBandControls bandControlsArea { audioProcessor.apvts };
 
-    ResponseCurveComponent analyzerArea { audioProcessor };
+    SpectrumAnalyzer analyzerArea { audioProcessor };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JMB3AudioProcessorEditor)
 };
