@@ -5,7 +5,6 @@
 #include "DSP/Params.h"
 #include "PluginEditor.h"
 
-//==============================================================================
 JMB3AudioProcessor::JMB3AudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
