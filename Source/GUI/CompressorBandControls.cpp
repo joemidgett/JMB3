@@ -1,8 +1,8 @@
 // CompressorBandControls.cpp
 
 #include "CompressorBandControls.h"
-#include "Utilities.h"
 #include "../DSP/Params.h"
+#include "Utilities.h"
 
 //==============================================================================
 CompressorBandControls::CompressorBandControls(juce::AudioProcessorValueTreeState& apv) :
