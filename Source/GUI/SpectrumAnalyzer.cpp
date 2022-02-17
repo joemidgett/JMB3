@@ -1,10 +1,10 @@
 // SpectrumAnalyzer.cpp
 
 #include "SpectrumAnalyzer.h"
+#include "Utilities.h"
 
 SpectrumAnalyzer::SpectrumAnalyzer(JMB3AudioProcessor& p) :
     audioProcessor(p),
-
     leftPathProducer(audioProcessor.leftChannelFifo),
     rightPathProducer(audioProcessor.rightChannelFifo)
 {
@@ -26,146 +26,132 @@ SpectrumAnalyzer::~SpectrumAnalyzer()
     }
 }
 
-void SpectrumAnalyzer::parameterValueChanged(int parameterIndex, float newValue)
-{
-    parametersChanged.set(true);
-}
-
-void SpectrumAnalyzer::timerCallback()
-{
-    if (shouldShowFFTAnalysis)
-    {
-        auto fftBounds = getAnalysisArea().toFloat();
-        fftBounds.setBottom(getLocalBounds().getBottom());
-        auto sampleRate = audioProcessor.getSampleRate();
-
-        leftPathProducer.process(fftBounds, sampleRate);
-        rightPathProducer.process(fftBounds, sampleRate);
-    }
-
-    if (parametersChanged.compareAndSetBool(false, true))
-    {
-
-    }
-
-    repaint();
-}
-
 void SpectrumAnalyzer::paint(juce::Graphics& g)
 {
     using namespace juce;
     g.fillAll(Colours::black);
 
-    g.drawImage(background, getLocalBounds().toFloat());
+    auto bounds = drawModuleBackground(g, getLocalBounds());
 
-    auto responseArea = getAnalysisArea();
+    drawBackgroundGrid(g, bounds);
 
-    auto w = responseArea.getWidth();
-
-    auto sampleRate = audioProcessor.getSampleRate();
-
-    std::vector<double> mags;
-
-    mags.resize(w);
-
-    Path responseCurve;
-
-    const double outputMin = responseArea.getBottom();
-    const double outputMax = responseArea.getY();
-    auto map = [outputMin, outputMax](double input)
-    {
-        return jmap(input, -24.0, 24.0, outputMin, outputMax);
-    };
-
-    responseCurve.startNewSubPath(responseArea.getX(), map(mags.front()));
-
-    for (size_t i = 1; i < mags.size(); ++i)
-    {
-        responseCurve.lineTo(responseArea.getX() + i, map(mags[i]));
-    }
+    auto responseArea = getAnalysisArea(bounds);
 
     if (shouldShowFFTAnalysis)
     {
         auto leftChannelFFTPath = leftPathProducer.getPath();
         leftChannelFFTPath.applyTransform(AffineTransform().translation(responseArea.getX(), 0
-            // responseArea.getY()
+            //responseArea.getY()
         ));
 
-        g.setColour(Colour(254u, 78u, 218u)); // Darker value
+        g.setColour(Colour(97u, 18u, 167u)); // Purple
         g.strokePath(leftChannelFFTPath, PathStrokeType(1.f));
 
         auto rightChannelFFTPath = rightPathProducer.getPath();
         rightChannelFFTPath.applyTransform(AffineTransform().translation(responseArea.getX(), 0
-            // responseArea.getY()
+            //responseArea.getY()
         ));
 
-        g.setColour(Colour(224u, 176u, 255u)); // Lighter value
+        g.setColour(Colour(215u, 201u, 134u));
         g.strokePath(rightChannelFFTPath, PathStrokeType(1.f));
     }
 
-    g.setColour(Colour(216u, 191u, 216u));
-    g.drawRoundedRectangle(getRenderArea().toFloat(), 4.f, 1.f);
+    Path border;
+
+    border.setUsingNonZeroWinding(false);
+
+    border.addRoundedRectangle(getRenderArea(bounds), 4);
+    border.addRectangle(getLocalBounds());
+
+    g.setColour(Colours::black);
+
+    //    g.fillPath(border);
+
+    drawTextLabels(g, bounds);
+
+    g.setColour(Colours::orange);
+    g.drawRoundedRectangle(getRenderArea(bounds).toFloat(), 4.f, 1.f);
 }
 
-void SpectrumAnalyzer::resized()
+std::vector<float> SpectrumAnalyzer::getFrequencies()
 {
-    using namespace juce;
-
-    auto fftBounds = getAnalysisArea().toFloat();
-    auto negInf = jmap(getLocalBounds().toFloat().getBottom(),
-        fftBounds.getBottom(), fftBounds.getY(), -48.f, 0.f);
-    DBG("Negative Infinity: " << negInf);
-    leftPathProducer.updateNegativeInfnity(negInf);
-    rightPathProducer.updateNegativeInfnity(negInf);
-
-    background = Image(Image::PixelFormat::RGB, getWidth(), getHeight(), true);
-
-    Graphics g(background);
-
-    Array<float> freqs
+    return std::vector<float>
     {
         20, /*30, 40,*/ 50, 100,
-        200, /*300, 400,*/ 500, 1000,
-        2000, /*3000, 4000,*/ 5000, 10000,
-        20000
+            200, /*300, 400,*/ 500, 1000,
+            2000, /*3000, 4000,*/ 5000, 10000,
+            20000
     };
+}
 
-    auto renderArea = getAnalysisArea();
+std::vector<float> SpectrumAnalyzer::getGains()
+{
+    return std::vector<float>
+    {
+        -24, -12, 0, 12, 24
+    };
+}
+
+std::vector<float> SpectrumAnalyzer::getXs(const std::vector<float>& freqs, float left, float width)
+{
+    std::vector<float> xs;
+    for (auto f : freqs)
+    {
+        auto normX = juce::mapFromLog10(f, 20.f, 20000.f);
+        xs.push_back(left + width * normX);
+    }
+
+    return xs;
+}
+
+void SpectrumAnalyzer::drawBackgroundGrid(juce::Graphics& g,
+    juce::Rectangle<int> bounds)
+{
+    using namespace juce;
+    auto freqs = getFrequencies();
+
+    auto renderArea = getAnalysisArea(bounds);
     auto left = renderArea.getX();
     auto right = renderArea.getRight();
     auto top = renderArea.getY();
     auto bottom = renderArea.getBottom();
     auto width = renderArea.getWidth();
 
-    Array<float> xs;
-    for (auto f : freqs)
-    {
-        auto normX = mapFromLog10(f, 20.f, 20000.f);
-        xs.add(left + width * normX);
-    }
+    auto xs = getXs(freqs, left, width);
 
     g.setColour(Colours::dimgrey);
-
     for (auto x : xs)
     {
         g.drawVerticalLine(x, top, bottom);
     }
 
-    Array<float> gain
-    {
-        -24, -12, 0, 12, 24
-    };
+    auto gain = getGains();
 
     for (auto gDb : gain)
     {
         auto y = jmap(gDb, -24.f, 24.f, float(bottom), float(top));
+
         g.setColour(gDb == 0.f ? Colour(0u, 172u, 1u) : Colours::darkgrey);
         g.drawHorizontalLine(y, left, right);
     }
+}
 
+void SpectrumAnalyzer::drawTextLabels(juce::Graphics& g, juce::Rectangle<int> bounds)
+{
+    using namespace juce;
     g.setColour(Colours::lightgrey);
     const int fontHeight = 10;
     g.setFont(fontHeight);
+
+    auto renderArea = getAnalysisArea(bounds);
+    auto left = renderArea.getX();
+
+    auto top = renderArea.getY();
+    auto bottom = renderArea.getBottom();
+    auto width = renderArea.getWidth();
+
+    auto freqs = getFrequencies();
+    auto xs = getXs(freqs, left, width);
 
     for (int i = 0; i < freqs.size(); ++i)
     {
@@ -188,12 +174,15 @@ void SpectrumAnalyzer::resized()
         auto textWidth = g.getCurrentFont().getStringWidth(str);
 
         Rectangle<int> r;
+
         r.setSize(textWidth, fontHeight);
         r.setCentre(x, 0);
         r.setY(1);
 
         g.drawFittedText(str, r, juce::Justification::centred, 1);
     }
+
+    auto gain = getGains();
 
     for (auto gDb : gain)
     {
@@ -213,7 +202,7 @@ void SpectrumAnalyzer::resized()
 
         g.setColour(gDb == 0.f ? Colour(0u, 172u, 1u) : Colours::lightgrey);
 
-        g.drawFittedText(str, r, juce::Justification::centred, 1);
+        g.drawFittedText(str, r, juce::Justification::centredLeft, 1);
 
         str.clear();
         str << (gDb - 24.f);
@@ -222,25 +211,64 @@ void SpectrumAnalyzer::resized()
         textWidth = g.getCurrentFont().getStringWidth(str);
         r.setSize(textWidth, fontHeight);
         g.setColour(Colours::lightgrey);
-        g.drawFittedText(str, r, juce::Justification::centred, 1);
+        g.drawFittedText(str, r, juce::Justification::centredLeft, 1);
     }
 }
 
-juce::Rectangle<int> SpectrumAnalyzer::getRenderArea()
+void SpectrumAnalyzer::resized()
 {
+    using namespace juce;
     auto bounds = getLocalBounds();
+    auto fftBounds = getAnalysisArea(bounds).toFloat();
+    auto negInf = jmap(bounds.toFloat().getBottom(),
+        fftBounds.getBottom(), fftBounds.getY(),
+        -48.f, 0.f);
+    DBG("Negative infinity: " << negInf);
+    leftPathProducer.updateNegativeInfinity(negInf);
+    rightPathProducer.updateNegativeInfinity(negInf);
+}
+
+void SpectrumAnalyzer::parameterValueChanged(int parameterIndex, float newValue)
+{
+    parametersChanged.set(true);
+}
+
+void SpectrumAnalyzer::timerCallback()
+{
+    if (shouldShowFFTAnalysis)
+    {
+        auto bounds = getLocalBounds();
+        auto fftBounds = getAnalysisArea(bounds).toFloat();
+        fftBounds.setBottom(bounds.getBottom());
+        auto sampleRate = audioProcessor.getSampleRate();
+
+        leftPathProducer.process(fftBounds, sampleRate);
+        rightPathProducer.process(fftBounds, sampleRate);
+    }
+
+    if (parametersChanged.compareAndSetBool(false, true))
+    {
+
+    }
+
+    repaint();
+}
+
+juce::Rectangle<int> SpectrumAnalyzer::getRenderArea(juce::Rectangle<int> bounds)
+{
+    //    auto bounds = getLocalBounds();
 
     bounds.removeFromTop(12);
-    bounds.removeFromBottom(1);
+    bounds.removeFromBottom(2);
     bounds.removeFromLeft(20);
     bounds.removeFromRight(20);
 
     return bounds;
 }
 
-juce::Rectangle<int> SpectrumAnalyzer::getAnalysisArea()
+juce::Rectangle<int> SpectrumAnalyzer::getAnalysisArea(juce::Rectangle<int> bounds)
 {
-    auto bounds = getRenderArea();
+    bounds = getRenderArea(bounds);
     bounds.removeFromTop(4);
     bounds.removeFromBottom(4);
     return bounds;

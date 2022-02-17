@@ -22,7 +22,7 @@ struct PathProducer
     void process(juce::Rectangle<float> fftBounds, double sampleRate);
     juce::Path getPath() { return leftChannelFFTPath; }
 
-    void updateNegativeInfnity(float nf) { negativeInfinity = nf; }
+    void updateNegativeInfinity(float nf) { negativeInfinity = nf; }
 
 private:
     SingleChannelSampleFifo<JMB3AudioProcessor::BlockType>* leftChannelFifo;
