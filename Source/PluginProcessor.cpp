@@ -188,6 +188,9 @@ void JMB3AudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     {
         buffer.setSize(processSpec.numChannels, samplesPerBlock);
     }
+
+    leftChannelFifo.prepare(samplesPerBlock);
+    rightChannelFifo.prepare(samplesPerBlock);
 }
 
 void JMB3AudioProcessor::releaseResources()
@@ -281,6 +284,9 @@ void JMB3AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
         buffer.clear (i, 0, buffer.getNumSamples());
 
     updateState();
+
+    leftChannelFifo.update(buffer);
+    rightChannelFifo.update(buffer);
 
     applyGain(buffer, inputGain);
 
