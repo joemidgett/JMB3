@@ -202,10 +202,6 @@ private:
     JMB3AudioProcessor& audioProcessor;
     juce::Atomic<bool> parametersChanged{ false };
 
-    // MonoChain monoChain;
-
-    // void updateChain();
-
     juce::Image background;
 
     juce::Rectangle<int> getRenderArea();

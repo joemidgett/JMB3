@@ -99,10 +99,7 @@ void SpectrumAnalyzer::timerCallback()
 
     if (parametersChanged.compareAndSetBool(false, true))
     {
-        DBG("params changed");
-        // Update the monochain
-        // updateChain();
-        // repaint();
+        
     }
 
     repaint();
@@ -119,50 +116,11 @@ void SpectrumAnalyzer::paint(juce::Graphics& g)
 
     auto w = responseArea.getWidth();
 
-    //auto& lowcut = monoChain.get<ChainPositions::LowCut>();
-    //auto& peak = monoChain.get<ChainPositions::Peak>();
-    //auto& highcut = monoChain.get<ChainPositions::HighCut>();
-
     auto sampleRate = audioProcessor.getSampleRate();
 
     std::vector<double> mags;
 
     mags.resize(w);
-
-    //for (int i = 0; i < w; ++i)
-    //{
-    //    double mag = 1.f;
-    //    auto freq = mapToLog10(double(i) / double(w), 20.0, 20000.0);
-
-    //    /*if (!monoChain.isBypassed<ChainPositions::Peak>())
-    //        mag *= peak.coefficients->getMagnitudeForFrequency(freq, sampleRate);
-
-    //    if (!monoChain.isBypassed<ChainPositions::LowCut>())
-    //    {
-    //        if (!lowcut.isBypassed<0>())
-    //            mag *= lowcut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-    //        if (!lowcut.isBypassed<1>())
-    //            mag *= lowcut.get<1>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-    //        if (!lowcut.isBypassed<2>())
-    //            mag *= lowcut.get<2>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-    //        if (!lowcut.isBypassed<3>())
-    //            mag *= lowcut.get<3>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-    //    }
-
-    //    if (!monoChain.isBypassed<ChainPositions::HighCut>())
-    //    {
-    //        if (!highcut.isBypassed<0>())
-    //            mag *= highcut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-    //        if (!highcut.isBypassed<1>())
-    //            mag *= highcut.get<1>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-    //        if (!highcut.isBypassed<2>())
-    //            mag *= highcut.get<2>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-    //        if (!highcut.isBypassed<3>())
-    //            mag *= highcut.get<3>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-    //    }*/
-
-    //    mags[i] = Decibels::gainToDecibels(mag);
-    //}
 
     Path responseCurve;
 
@@ -197,9 +155,6 @@ void SpectrumAnalyzer::paint(juce::Graphics& g)
 
     g.setColour(Colour(216u, 191u, 216u));
     g.drawRoundedRectangle(getRenderArea().toFloat(), 4.f, 1.f);
-
-    //g.setColour(Colours::white);
-    //g.strokePath(responseCurve, PathStrokeType(2.f));
 }
 
 void SpectrumAnalyzer::resized()
