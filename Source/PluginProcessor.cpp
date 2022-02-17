@@ -191,6 +191,14 @@ void JMB3AudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 
     leftChannelFifo.prepare(samplesPerBlock);
     rightChannelFifo.prepare(samplesPerBlock);
+
+    osc.initialise([](float x) { return std::sin(x); });
+    osc.prepare(processSpec);
+    // osc.setFrequency(1000);
+    osc.setFrequency(getSampleRate() / ((2 << FFTOrder::order2048) - 1) * 50);
+
+    gain.prepare(processSpec);
+    // gain.setGainDecibels(-12.f);
 }
 
 void JMB3AudioProcessor::releaseResources()
@@ -284,6 +292,17 @@ void JMB3AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
         buffer.clear (i, 0, buffer.getNumSamples());
 
     updateState();
+
+    if (true)
+    {
+        buffer.clear();
+        auto block = juce::dsp::AudioBlock<float>(buffer);
+        auto ctx = juce::dsp::ProcessContextReplacing<float>(block);
+        osc.process(ctx);
+
+        gain.setGainDecibels(JUCE_LIVE_CONSTANT(-12));
+        gain.process(ctx);
+    }
 
     leftChannelFifo.update(buffer);
     rightChannelFifo.update(buffer);
