@@ -5,6 +5,7 @@
 #include <JuceHeader.h>
 
 #include "../DSP/Fifo.h"
+#include "Utilities.h"
 
 template<typename PathType>
 struct AnalyzerPathGenerator
@@ -28,7 +29,7 @@ struct AnalyzerPathGenerator
 
         auto map = [bottom, top, negativeInfinity](float v)
         {
-            return juce::jmap(v, negativeInfinity, 0.f,
+            return juce::jmap(v, negativeInfinity, MAX_DECIBELS,
                 // float(bottom), top);
                 bottom, top);
         };
@@ -52,7 +53,7 @@ struct AnalyzerPathGenerator
             if (!std::isnan(y) && !std::isinf(y));
             {
                 auto binFreq = binNum * binWidth;
-                auto normalizedBinX = juce::mapFromLog10(binFreq, 20.f, 20000.f);
+                auto normalizedBinX = juce::mapFromLog10(binFreq, MIN_FREQUENCY, MAX_FREQUENCY);
                 int binX = std::floor(normalizedBinX * width);
                 p.lineTo(binX, y);
             }
