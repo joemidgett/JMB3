@@ -14,7 +14,7 @@
 #include "GUI/SpectrumAnalyzer.h"
 #include "GUI/UtilityComponents.h"
 
-class JMB3AudioProcessorEditor : public juce::AudioProcessorEditor
+class JMB3AudioProcessorEditor : public juce::AudioProcessorEditor, juce::Timer
 {
 public:
     JMB3AudioProcessorEditor (JMB3AudioProcessor&);
@@ -23,6 +23,8 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+
+    void timerCallback() override;
 
 private:
     LookAndFeel lnf;

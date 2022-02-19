@@ -17,6 +17,8 @@ JMB3AudioProcessorEditor::JMB3AudioProcessorEditor (JMB3AudioProcessor& p)
     addAndMakeVisible(bandControlsArea);
 
     setSize (600, 500);
+
+    startTimerHz(60);
 }
 
 JMB3AudioProcessorEditor::~JMB3AudioProcessorEditor()
@@ -51,4 +53,19 @@ void JMB3AudioProcessorEditor::resized()
     analyzerArea.setBounds(bounds.removeFromTop(225));
 
     globalControlsArea.setBounds(bounds);
+}
+
+void JMB3AudioProcessorEditor::timerCallback()
+{
+    std::vector<float> values
+    {
+        audioProcessor.lowBandComp.getRMSInputLevelDb(),
+        audioProcessor.lowBandComp.getRMSOutputLevelDb(),
+        audioProcessor.midBandComp.getRMSInputLevelDb(),
+        audioProcessor.midBandComp.getRMSOutputLevelDb(),
+        audioProcessor.highBandComp.getRMSInputLevelDb(),
+        audioProcessor.highBandComp.getRMSOutputLevelDb()
+    };
+
+    analyzerArea.update(values);
 }

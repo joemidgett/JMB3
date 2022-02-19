@@ -17,6 +17,8 @@ void CompressorBand::updateCompressorSettings()
 
 void CompressorBand::processCompressor(juce::AudioBuffer<float>& buffer)
 {
+    auto preRMS = computeRMSLevel(buffer);
+
     auto audioBlock = juce::dsp::AudioBlock<float>(buffer);
 
     auto processContextReplacing = juce::dsp::ProcessContextReplacing<float>(audioBlock);
@@ -24,4 +26,14 @@ void CompressorBand::processCompressor(juce::AudioBuffer<float>& buffer)
     processContextReplacing.isBypassed = bypass->get();
 
     compressor.process(processContextReplacing);
+
+    auto postRMS = computeRMSLevel(buffer);
+
+    auto convertToDb = [](auto input)
+    {
+        return juce::Decibels::gainToDecibels(input);
+    };
+
+    rmsInputLevelDb.store(convertToDb(preRMS));
+    rmsOutputLevelDb.store(convertToDb(postRMS));
 }
