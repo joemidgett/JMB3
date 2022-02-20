@@ -6,6 +6,7 @@
 
 #include "GUI/AnalyzerPathGenerator.h"
 #include "GUI/CompressorBandControls.h"
+#include "GUI/CustomButtons.h"
 #include "GUI/FFTDataGenerator.h"
 #include "GUI/GlobalControls.h"
 #include "GUI/LookAndFeel.h"
@@ -13,6 +14,15 @@
 #include "PluginProcessor.h"
 #include "GUI/SpectrumAnalyzer.h"
 #include "GUI/UtilityComponents.h"
+
+struct ControlBar : juce::Component
+{
+    ControlBar();
+
+    void resized() override;
+
+    AnalyzerButton analyzerButton;
+};
 
 class JMB3AudioProcessorEditor : public juce::AudioProcessorEditor, juce::Timer
 {
@@ -33,7 +43,7 @@ private:
     // access the processor object that created it.
     JMB3AudioProcessor& audioProcessor;
 
-    Placeholder controlBarArea;
+    ControlBar controlBarArea;
 
     GlobalControls globalControlsArea { audioProcessor.apvts };
 

@@ -4,14 +4,33 @@
 #include "PluginProcessor.h"
 #include "DSP/SingleChannelSampleFifo.h"
 
+ControlBar::ControlBar()
+{
+    analyzerButton.setToggleState(true, juce::NotificationType::dontSendNotification);
+    addAndMakeVisible(analyzerButton);
+}
+
+void ControlBar::resized()
+{
+    auto bounds = getLocalBounds();
+
+    analyzerButton.setBounds(bounds.removeFromLeft(50).withTrimmedTop(4).withTrimmedBottom(4));
+}
+
 JMB3AudioProcessorEditor::JMB3AudioProcessorEditor (JMB3AudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setLookAndFeel(&lnf);
+
+    controlBarArea.analyzerButton.onClick = [this]()
+    {
+        auto shouldBeOn = controlBarArea.analyzerButton.getToggleState();
+        analyzerArea.toggleAnalysisEnablement(shouldBeOn);
+    };
     
-    // addAndMakeVisible(controlBarArea);
+    addAndMakeVisible(controlBarArea);
     addAndMakeVisible(analyzerArea);
     addAndMakeVisible(globalControlsArea);
     addAndMakeVisible(bandControlsArea);
