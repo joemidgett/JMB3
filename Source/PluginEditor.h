@@ -22,6 +22,7 @@ struct ControlBar : juce::Component
     void resized() override;
 
     AnalyzerButton analyzerButton;
+    PowerButton globalBypassButton;
 };
 
 class JMB3AudioProcessorEditor : public juce::AudioProcessorEditor, juce::Timer
@@ -50,6 +51,12 @@ private:
     CompressorBandControls bandControlsArea { audioProcessor.apvts };
 
     SpectrumAnalyzer analyzerArea { audioProcessor };
+
+    void toggleGlobalBypassState();
+
+    std::array<juce::AudioParameterBool*, 3> getBypassParams();
+
+    void updateGlobalBypassButton();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JMB3AudioProcessorEditor)
 };
