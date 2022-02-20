@@ -2,17 +2,19 @@
 
 #include "UtilityComponents.h"
 
+//==============================================================================
 Placeholder::Placeholder()
 {
-    juce::Random randomValue;
-    customColor = juce::Colour(randomValue.nextInt(255), randomValue.nextInt(255), randomValue.nextInt(255));
+    juce::Random r;
+    customColor = juce::Colour(static_cast<juce::uint8>(r.nextInt(255)),
+        static_cast<juce::uint8>(r.nextInt(255)),
+        static_cast<juce::uint8>(r.nextInt(255)));
 }
 
 void Placeholder::paint(juce::Graphics& g)
 {
     g.fillAll(customColor);
 }
-
 //==============================================================================
 RotarySlider::RotarySlider() :
     juce::Slider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,

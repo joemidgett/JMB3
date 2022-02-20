@@ -1,5 +1,6 @@
 // RotarySliderWithLabels.cpp
 
+#include "LookAndFeel.h"
 #include "RotarySliderWithLabels.h"
 #include "Utilities.h"
 
@@ -16,17 +17,17 @@ void RotarySliderWithLabels::paint(juce::Graphics& g)
 
     auto bounds = getLocalBounds();
 
-    g.setColour(Colours::blueviolet);
-    g.drawFittedText(getName(), bounds.removeFromTop(getTextHeight() + 2), Justification::centredBottom, 1);
-
     // g.setColour(Colours::red);
     // g.drawRect(getLocalBounds());
     // g.setColour(Colours::yellow);
     // g.drawRect(sliderBounds);
 
+    g.setColour(ColorScheme::getTitleColor());
+    g.drawFittedText(getName(), bounds.removeFromTop(getTextHeight() + 2), Justification::centredBottom, 1);
+
     getLookAndFeel().drawRotarySlider(g, sliderBounds.getX(), sliderBounds.getY(),
         sliderBounds.getWidth(), sliderBounds.getHeight(),
-        jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 1.0),
+        static_cast<float>(jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 1.0)),
         startAng,
         endAng,
         *this);
@@ -34,7 +35,7 @@ void RotarySliderWithLabels::paint(juce::Graphics& g)
     auto center = sliderBounds.toFloat().getCentre();
     auto radius = sliderBounds.getWidth() * 0.5f;
 
-    g.setColour(Colour(0u, 172u, 1u));
+    g.setColour(ColorScheme::getSliderRangeTextColor());
     g.setFont(getTextHeight());
 
     auto numChoices = labels.size();
@@ -62,15 +63,14 @@ juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const
 {
     auto bounds = getLocalBounds();
 
-    bounds.removeFromTop(getTextHeight() * 1.5);
+    bounds.removeFromTop(static_cast<int>(getTextHeight() * 1.5));
 
     auto size = juce::jmin(bounds.getWidth(), bounds.getHeight());
 
-    size -= getTextHeight() * 1.5;
+    size -= static_cast<int>(getTextHeight() * 1.5);
     juce::Rectangle<int> r;
     r.setSize(size, size);
     r.setCentre(bounds.getCentreX(), 0);
-    // r.setY(2);
     r.setY(bounds.getY());
 
     return r;
@@ -86,15 +86,10 @@ juce::String RotarySliderWithLabels::getDisplayString() const
 
     if (auto* floatParam = dynamic_cast<juce::AudioParameterFloat*>(param))
     {
-        float val = getValue();
+        auto val = getValue();
 
-        //if (val > 999.f)
-        //{
-        //    val /= 1000.f;
-        //    addK = true;
-        //}
+        addK = truncateKiloValue(val);
 
-        addK = truncateKiloVaue(val);
         str = juce::String(val, (addK ? 2 : 0));
     }
     else
@@ -123,7 +118,7 @@ void RotarySliderWithLabels::changeParam(juce::RangedAudioParameter* p)
 //==============================================================================
 juce::String RatioSlider::getDisplayString() const
 {
-    auto choiceParam = dynamic_cast<juce::AudioParameterChoice*>(param);
+    auto* choiceParam = dynamic_cast<juce::AudioParameterChoice*>(param);
     jassert(choiceParam != nullptr);
 
     auto currentChoice = choiceParam->getCurrentChoiceName();

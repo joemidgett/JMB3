@@ -1,5 +1,6 @@
 // Utilities.cpp
 
+#include "LookAndFeel.h"
 #include "Utilities.h"
 
 juce::String getValString(const juce::RangedAudioParameter& param,
@@ -11,7 +12,7 @@ juce::String getValString(const juce::RangedAudioParameter& param,
     auto val = getLow ? param.getNormalisableRange().start :
         param.getNormalisableRange().end;
 
-    bool useK = truncateKiloVaue(val);
+    bool useK = truncateKiloValue(val);
     str << val;
 
     if (useK)
@@ -27,7 +28,7 @@ juce::Rectangle<int> drawModuleBackground(juce::Graphics& g,
 {
     using namespace juce;
 
-    g.setColour(Colours::blueviolet);
+    g.setColour(ColorScheme::getModuleBorderColor());
     g.fillAll();
 
     auto localBounds = bounds;

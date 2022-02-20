@@ -4,13 +4,15 @@
 
 #include <JuceHeader.h>
 
-#include "../DSP/Fifo.h"
 #include "Utilities.h"
+#include "../DSP/Fifo.h"
 
 template<typename BlockType>
 struct FFTDataGenerator
 {
-    // Produces FFT data from an audio buffer
+    /**
+     produces the FFT data from an audio buffer.
+     */
     void produceFFTDataForRendering(const juce::AudioBuffer<float>& audioData, const float negativeInfinity)
     {
         const auto fftSize = getFFTSize();
@@ -19,40 +21,51 @@ struct FFTDataGenerator
         auto* readIndex = audioData.getReadPointer(0);
         std::copy(readIndex, readIndex + fftSize, fftData.begin());
 
-        // Apply windowing function to data
-        window->multiplyWithWindowingTable(fftData.data(), fftSize);
+        // first apply a windowing function to our data
+        window->multiplyWithWindowingTable(fftData.data(),
+            static_cast<size_t>(fftSize));       // [1]
 
-        // Render FFT data
-        forwardFFT->performFrequencyOnlyForwardTransform(fftData.data());
+// then render our FFT data..
+        forwardFFT->performFrequencyOnlyForwardTransform(fftData.data());  // [2]
 
         int numBins = (int)fftSize / 2;
 
-        // Normalize the FFT values
+        //normalize the fft values.
         for (int i = 0; i < numBins; ++i)
         {
-            fftData[i] /= (float)numBins;
+            auto v = fftData[static_cast<size_t>(i)];
+            //            fftData[i] /= (float) numBins;
+            if (!std::isinf(v) && !std::isnan(v))
+            {
+                v /= float(numBins);
+            }
+            else
+            {
+                v = 0.f;
+            }
+            fftData[static_cast<size_t>(i)] = v;
         }
 
         float max = negativeInfinity;
-
-        // Convert FFT data to decibels
+        //convert them to decibels
         for (int i = 0; i < numBins; ++i)
         {
-            auto data = juce::Decibels::gainToDecibels(fftData[i], negativeInfinity);
-            fftData[i] = data;
+            auto data = juce::Decibels::gainToDecibels(fftData[static_cast<size_t>(i)],
+                negativeInfinity);
+            fftData[static_cast<size_t>(i)] = data;
             max = juce::jmax(data, max);
         }
 
-        // jassertfalse;
+        //        jassertfalse;
 
         fftDataFifo.push(fftData);
     }
 
     void changeOrder(FFTOrder newOrder)
     {
-        // When you change order, recreate the window, forwardFFT, fifo, fftData
-        // Also reset the fifoIndex
-        // Things that need recreating should be created on the heap via std::make_unique<>
+        //when you change order, recreate the window, forwardFFT, fifo, fftData
+        //also reset the fifoIndex
+        //things that need recreating should be created on the heap via std::make_unique<>
 
         order = newOrder;
         auto fftSize = getFFTSize();
@@ -61,18 +74,15 @@ struct FFTDataGenerator
         window = std::make_unique<juce::dsp::WindowingFunction<float>>(fftSize, juce::dsp::WindowingFunction<float>::blackmanHarris);
 
         fftData.clear();
-        fftData.resize(fftSize * 2, 0);
+        fftData.resize(static_cast<size_t>(fftSize * 2), 0);
 
         fftDataFifo.prepare(fftData.size());
     }
-
-    // ==============================================================================
+    //==============================================================================
     int getFFTSize() const { return 1 << order; }
     int getNumAvailableFFTDataBlocks() const { return fftDataFifo.getNumAvailableForReading(); }
-
-    // ==============================================================================
-    bool getFFTData(BlockType& fftData) { return fftDataFifo.pull(fftData); }
-
+    //==============================================================================
+    bool getFFTData(BlockType& data) { return fftDataFifo.pull(data); }
 private:
     FFTOrder order;
     BlockType fftData;

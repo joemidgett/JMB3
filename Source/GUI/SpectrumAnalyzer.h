@@ -7,15 +7,10 @@
 #include "PathProducer.h"
 
 struct SpectrumAnalyzer : juce::Component,
-    juce::AudioProcessorParameter::Listener,
     juce::Timer
 {
     SpectrumAnalyzer(JMB3AudioProcessor&);
-    ~SpectrumAnalyzer();
-
-    void parameterValueChanged(int parameterIndex, float newValue) override;
-
-    void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override { }
+    ~SpectrumAnalyzer() override = default;
 
     void timerCallback() override;
 
@@ -28,15 +23,11 @@ struct SpectrumAnalyzer : juce::Component,
     }
 
     void update(const std::vector<float>& values);
-
 private:
     JMB3AudioProcessor& audioProcessor;
 
     bool shouldShowFFTAnalysis = true;
 
-    juce::Atomic<bool> parametersChanged{ false };
-
-    //    void drawBackgroundGrid(juce::Graphics& g);
     void drawBackgroundGrid(juce::Graphics& g,
         juce::Rectangle<int> bounds);
 
@@ -59,14 +50,14 @@ private:
     void drawCrossovers(juce::Graphics& g,
         juce::Rectangle<int> bounds);
 
-    juce::AudioParameterFloat* lowMidXOverParam { nullptr };
-    juce::AudioParameterFloat* midHighXOverParam { nullptr };
+    juce::AudioParameterFloat* lowMidXoverParam{ nullptr };
+    juce::AudioParameterFloat* midHighXoverParam{ nullptr };
 
     juce::AudioParameterFloat* lowThresholdParam{ nullptr };
     juce::AudioParameterFloat* midThresholdParam{ nullptr };
     juce::AudioParameterFloat* highThresholdParam{ nullptr };
 
-    float lowBandGR { 0.f };
-    float midBandGR { 0.f };
-    float highBandGR { 0.f };
+    float lowBandGR{ 0.f };
+    float midBandGR{ 0.f };
+    float highBandGR{ 0.f };
 };

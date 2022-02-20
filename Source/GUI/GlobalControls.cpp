@@ -19,10 +19,10 @@ GlobalControls::GlobalControls(juce::AudioProcessorValueTreeState& apvts)
     auto& midHighParam = getParamHelper(Names::Mid_High_Crossover_Freq);
     auto& gainOutParam = getParamHelper(Names::Gain_Out);
 
-    inputGainSlider = std::make_unique<RSWL>(&gainInParam, "dB", "INPUT TRIM");
+    inputGainSlider = std::make_unique<RSWL>(&gainInParam, "dB", "INPUT GAIN");
     lowMidXoverSlider = std::make_unique<RSWL>(&lowMidParam, "Hz", "LOW-MID X-OVER");
     midHighXoverSlider = std::make_unique<RSWL>(&midHighParam, "Hz", "MID-HI X-OVER");
-    outputGainSlider = std::make_unique<RSWL>(&gainOutParam, "dB", "OUTPUT TRIM");
+    outputGainSlider = std::make_unique<RSWL>(&gainOutParam, "dB", "OUTPUT GAIN");
 
     auto makeAttachmentHelper = [&params, &apvts](auto& attachment,
         const auto& name,
